@@ -32,10 +32,19 @@ app = FastAPI(title="Busca CNPJ", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
-origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+origins = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+    if origin.strip()
+]
+origin_regex = os.getenv(
+    "ALLOWED_ORIGIN_REGEX",
+    r"https://[a-z0-9-]+\.azurestaticapps\.net",
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=origin_regex or None,
     allow_methods=["GET"],
     allow_headers=["*"],
 )
