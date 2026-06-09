@@ -448,6 +448,7 @@ def get_empresa_rede(db: Session, cnpj: str) -> dict | None:
         qual = row[2]
         if cpf not in socios_map:
             socios_map[cpf] = {
+                "cpf":  cpf,
                 "nome": nome,
                 "qual": qual,
                 "ultima": row[3],
@@ -473,13 +474,14 @@ def get_empresa_rede(db: Session, cnpj: str) -> dict | None:
     children = []
     for s in socios_list[:50]:
         emp_children = [
-            {"name": e["nome"], "value": e["situacao"]}
-            for e in list(s["empresas"].values())[:20]
+            {"name": e["nome"], "value": e["situacao"], "cnpj_basico": cnpj_e}
+            for cnpj_e, e in list(s["empresas"].items())[:20]
         ]
         children.append({
             "name":     s["nome"],
             "value":    "socio" if s["ativo"] else "ex_socio",
             "detail":   _qual_desc(s["qual"]) or ("Sócio" if s["ativo"] else "Ex-sócio"),
+            "cpf":      s["cpf"],
             "children": emp_children,
         })
 

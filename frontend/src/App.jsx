@@ -142,6 +142,7 @@ export default function App() {
 
         {tela === "resultado-empresa" && (
           <ResultadoEmpresa
+            key={empresaDetalhe?.cnpj_basico || empresaDetalhe?.cnpj_completo}
             dados={empresaDetalhe}
             onVoltar={() => irPara(telaAnterior || "empresa")}
             onVerSocio={abrirSocio}
@@ -152,6 +153,7 @@ export default function App() {
 
         {tela === "resultado-socio" && (
           <ResultadoSocio
+            key={`${socioInicial?.cpf_cnpj_socio || ""}|${socioInicial?.nome_socio || ""}`}
             socioInicial={socioInicial}
             onVoltar={() => irPara(telaAnterior || "socio")}
             onVerEmpresa={abrirEmpresa}

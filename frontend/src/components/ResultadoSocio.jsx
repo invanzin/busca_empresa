@@ -290,6 +290,48 @@ function CnaeGroup({ titulo, items, cor }) {
   );
 }
 
+// ── Mapa de Relacionamentos (cabeçalho com botão "Rede completa") ─────────────
+
+function MapaRelacionamentos({ perfil, info, onAbrirGrafo, onVerEmpresa, onVerSocio }) {
+  const [aberto, setAberto] = useState(false);
+  return (
+    <div className="bg-surface-container-lowest rounded-xl border border-surface-variant overflow-hidden">
+      <div className="w-full flex items-center justify-between px-6 py-4 bg-surface-bright">
+        <button
+          onClick={() => setAberto(v => !v)}
+          className="flex items-center gap-2 text-left hover:opacity-80 transition-opacity"
+        >
+          <h2 className="text-headline-sm text-on-surface flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary">hub</span>
+            Mapa de Relacionamentos
+          </h2>
+          <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+            {aberto ? "expand_less" : "expand_more"}
+          </span>
+        </button>
+        {onAbrirGrafo && (
+          <button
+            onClick={() => onAbrirGrafo({ tipo: "socio", cpf: info.cpf, nome: info.nome, label: info.nome })}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[15px]">account_tree</span>
+            Rede completa
+          </button>
+        )}
+      </div>
+      {aberto && (
+        <div className="p-2">
+          <RedeSocio
+            perfil={perfil}
+            onVerEmpresa={onVerEmpresa}
+            onVerSocio={onVerSocio}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Componente principal ──────────────────────────────────────────────────────
 
 export default function ResultadoSocio({ socioInicial, onVoltar, onVerEmpresa, onVerSocio, onAbrirGrafo }) {
@@ -299,6 +341,12 @@ export default function ResultadoSocio({ socioInicial, onVoltar, onVerEmpresa, o
 
   const cpf  = socioInicial?.cpf_cnpj_socio || "";
   const nome = socioInicial?.nome_socio || "";
+
+  // Novo perfil → rola pro topo. App.jsx remonta este componente via `key`
+  // a cada sócio, então o effect roda uma vez no mount.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -540,22 +588,13 @@ export default function ResultadoSocio({ socioInicial, onVoltar, onVerEmpresa, o
               )}
 
               {/* Mapa de Relacionamentos */}
-              <Section icon="hub" title="Mapa de Relacionamentos" defaultOpen={false}>
-                <div className="p-2">
-                  {onAbrirGrafo && (
-                    <div className="flex justify-end px-2 pb-2">
-                      <button
-                        onClick={() => onAbrirGrafo({ tipo: "socio", cpf: info.cpf, nome: info.nome, label: info.nome })}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[15px]">account_tree</span>
-                        Rede completa
-                      </button>
-                    </div>
-                  )}
-                  <RedeSocio perfil={perfil} />
-                </div>
-              </Section>
+              <MapaRelacionamentos
+                perfil={perfil}
+                info={info}
+                onAbrirGrafo={onAbrirGrafo}
+                onVerEmpresa={onVerEmpresa}
+                onVerSocio={onVerSocio}
+              />
             </div>
           </div>
         )}

@@ -98,10 +98,21 @@ const AVATAR_CORES = [
   { bg: "#f0fdf4", color: "#15803d" },
 ];
 
-function SocioRow({ socio, idx, onVerSocio }) {
+function SocioRow({ socio, idx, onVerSocio, onVerEmpresa }) {
   const [expandido, setExpandido] = useState(false);
   const temHistorico = socio.qualificacoes_anteriores?.length > 0;
   const av = AVATAR_CORES[idx % AVATAR_CORES.length];
+  // Detecta sócio PJ pelo documento: 14 dígitos sem máscara (asteriscos) = CNPJ.
+  // Sócio PF aparece como ***123456** (mascarado pela RF).
+  const docDigits = (socio.cpf_cnpj_socio || "").replace(/\D/g, "");
+  const isPJ = !socio.cpf_cnpj_socio?.includes("*") && docDigits.length === 14;
+  const handleInvestigar = () => {
+    if (isPJ && onVerEmpresa) {
+      onVerEmpresa(docDigits);
+    } else if (onVerSocio) {
+      onVerSocio(socio);
+    }
+  };
 
   return (
     <>
@@ -157,9 +168,10 @@ function SocioRow({ socio, idx, onVerSocio }) {
         </td>
         <td className="p-3 pr-5 text-right whitespace-nowrap align-top">
           <button
-            onClick={() => onVerSocio && onVerSocio(socio)}
+            onClick={handleInvestigar}
             className="text-[12px] font-semibold hover:underline"
             style={{ color: "#0085ca" }}
+            title={isPJ ? "Abrir perfil da empresa sócia" : "Abrir perfil do sócio"}
           >
             Investigar
           </button>
@@ -285,6 +297,12 @@ export default function ResultadoEmpresa({ dados, onVoltar, onVerSocio, onVerEmp
   const [redeAberta, setRedeAberta]   = useState(false);
   const [redeData,   setRedeData]     = useState(null);
   const [redeLoading, setRedeLoading] = useState(false);
+
+  // Novo perfil → rola pro topo. O App.jsx remonta este componente via `key`
+  // a cada CNPJ, então o effect roda uma vez no mount de cada perfil.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const carregarRede = useCallback(async () => {
     if (redeData || redeLoading) return;
@@ -540,7 +558,7 @@ export default function ResultadoEmpresa({ dados, onVoltar, onVerSocio, onVerEmp
                     </thead>
                     <tbody>
                       {sociosAtivos.map((s, i) => (
-                        <SocioRow key={i} socio={s} idx={i} onVerSocio={onVerSocio} />
+                        <SocioRow key={i} socio={s} idx={i} onVerSocio={onVerSocio} onVerEmpresa={onVerEmpresa} />
                       ))}
                     </tbody>
                   </table>
@@ -588,7 +606,7 @@ export default function ResultadoEmpresa({ dados, onVoltar, onVerSocio, onVerEmp
                       </thead>
                       <tbody>
                         {sociosInativos.map((s, i) => (
-                          <SocioRow key={i} socio={s} idx={i} onVerSocio={onVerSocio} />
+                          <SocioRow key={i} socio={s} idx={i} onVerSocio={onVerSocio} onVerEmpresa={onVerEmpresa} />
                         ))}
                       </tbody>
                     </table>
@@ -655,7 +673,13 @@ export default function ResultadoEmpresa({ dados, onVoltar, onVerSocio, onVerEmp
                       Montando rede societária...
                     </div>
                   )}
-                  {redeData && !redeLoading && <RedeEmpresa data={redeData} />}
+                  {redeData && !redeLoading && (
+                    <RedeEmpresa
+                      data={redeData}
+                      onVerEmpresa={onVerEmpresa}
+                      onVerSocio={onVerSocio}
+                    />
+                  )}
                   {!redeLoading && !redeData && (
                     <p className="py-10 text-center text-[13px]" style={{ color: "#94a3b8" }}>Sem dados de rede.</p>
                   )}

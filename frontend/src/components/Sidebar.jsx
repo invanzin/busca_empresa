@@ -103,9 +103,10 @@ export default function Sidebar({ tela, irPara, onAbrirEmpresa, onAbrirSocio }) 
         })}
       </nav>
 
-      {/* Buscas recentes */}
+      {/* Buscas recentes — flex-1 garante que o footer sempre fica no fundo */}
+      <div className="flex-1 overflow-y-auto">
       {recentes.length > 0 && (
-        <div className="px-3 pt-8 mt-6 flex-1 overflow-y-auto border-t sidebar-scroll" style={S.divider}>
+        <div className="px-3 pt-8 mt-6 border-t sidebar-scroll" style={S.divider}>
           <div className="px-3 mb-2 flex items-center justify-between">
             <span className="text-[9.5px] font-semibold uppercase" style={S.sectionLabel}>
               Buscas recentes
@@ -129,6 +130,7 @@ export default function Sidebar({ tela, irPara, onAbrirEmpresa, onAbrirSocio }) 
           ))}
         </div>
       )}
+      </div>
 
       {/* Footer — métricas da base */}
       <div className="px-5 py-4 border-t shrink-0" style={S.divider}>

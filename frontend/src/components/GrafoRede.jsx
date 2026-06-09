@@ -281,6 +281,8 @@ function montarOption(data, selectedIds, idsBuscados, mostrarInativos, categoria
 export default function GrafoRede({ raiz, onVoltar, onVerEmpresa, onVerSocio }) {
   const ref = useRef(null);
   const chartRef = useRef(null);
+  const mainRef = useRef(null);
+  const [fullscreen, setFullscreen] = useState(false);
   const [profundidade, setProfundidade] = useState(2);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -304,6 +306,24 @@ export default function GrafoRede({ raiz, onVoltar, onVerEmpresa, onVerSocio }) 
   // Ref com links atualizados para o handler de clique (que é registrado uma vez por init).
   const linksRef = useRef([]);
   useEffect(() => { linksRef.current = data?.links || []; }, [data]);
+
+  // Fullscreen: alterna via Fullscreen API; também escuta ESC/outros saídas externas.
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement && mainRef.current) {
+      mainRef.current.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  };
+  useEffect(() => {
+    const onChange = () => setFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+  // Quando entra/sai de fullscreen, redimensiona o ECharts pra preencher.
+  useEffect(() => {
+    chartRef.current?.resize();
+  }, [fullscreen]);
 
   // Busca o grafo na profundidade atual (refetch ao trocar de raiz ou N).
   useEffect(() => {
@@ -599,7 +619,14 @@ export default function GrafoRede({ raiz, onVoltar, onVerEmpresa, onVerSocio }) 
     );
 
   return (
-    <main className="md:ml-52 md:w-[calc(100%-13rem)] bg-[#f7f9fc] h-screen flex flex-col overflow-hidden">
+    <main
+      ref={mainRef}
+      className={
+        fullscreen
+          ? "fixed inset-0 z-50 bg-[#f7f9fc] h-screen w-screen flex flex-col overflow-hidden"
+          : "md:ml-52 md:w-[calc(100%-13rem)] bg-[#f7f9fc] h-screen flex flex-col overflow-hidden"
+      }
+    >
       {/* Header */}
       <header
         className="sticky top-0 z-30 flex items-center justify-between px-8 h-14 bg-white/90 backdrop-blur-md border-b"
@@ -615,9 +642,26 @@ export default function GrafoRede({ raiz, onVoltar, onVerEmpresa, onVerSocio }) 
           <span className="material-symbols-outlined text-[17px]">arrow_back</span>
           Voltar
         </button>
-        <div className="flex items-center gap-2 text-[12px]" style={{ color: "#94a3b8" }}>
-          <span className="material-symbols-outlined text-[15px]">hub</span>
-          <span className="hidden sm:inline">Rede societária</span>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={toggleFullscreen}
+            className="flex items-center gap-1.5 text-[12px] font-medium transition-colors"
+            style={{ color: "#64748b" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#0085ca")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#64748b")}
+            title={fullscreen ? "Sair de tela cheia (ESC)" : "Ver em tela cheia"}
+          >
+            <span className="material-symbols-outlined text-[17px]">
+              {fullscreen ? "fullscreen_exit" : "fullscreen"}
+            </span>
+            <span className="hidden sm:inline">
+              {fullscreen ? "Sair de tela cheia" : "Tela cheia"}
+            </span>
+          </button>
+          <div className="flex items-center gap-2 text-[12px]" style={{ color: "#94a3b8" }}>
+            <span className="material-symbols-outlined text-[15px]">hub</span>
+            <span className="hidden sm:inline">Rede societária</span>
+          </div>
         </div>
       </header>
 
